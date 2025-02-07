@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI YouTube Tag Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #4c51bf;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        button:hover {
+            background: #434190;
+            transform: translateY(-2px);
+        }
+
+        .tags-container {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .tag {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .tag-actions button {
+            padding: 5px;
+            margin-left: 5px;
+            background: none;
+            color: #718096;
+        }
+
+        .tag-actions button:hover {
+            color: #4c51bf;
+        }
+
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .share-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI YouTube Tag Generator</h1>
+        
+        <div class="input-group">
+            <input type="text" id="topic" placeholder="Enter your video topic...">
+        </div>
+        
+        <div style="text-align: center;">
+            <button onclick="generateTags()">Generate Tags</button>
+        </div>
+
+        <div class="loading">⏳ Generating tags with AI...</div>
+
+        <div class="tags-container" id="tagsContainer"></div>
+
+        <div class="share-buttons">
+            <button onclick="saveTags()">💾 Save Tags</button>
+            <button onclick="copyTags()">📋 Copy All</button>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'AIzaSyBWg1R85cVzpVhWweNguqSKnJ-jXCtAgbs'; // Replace with your API key
+        const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+
+        async function generateTags() {
+            const topic = document.getElementById('topic').value;
+            if (!topic) return alert('Please enter a video topic');
+
+            document.querySelector('.loading').style.display = 'block';
+            document.getElementById('tagsContainer').innerHTML = '';
+
+            try {
+                const response = await fetch(${API_URL}?key=${API_KEY}, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: Generate 15 YouTube tags for a video about ${topic}. Return only comma-separated tags without numbers.
+                            }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const tagsText = data.candidates[0].content.parts[0].text;
+                const tags = tagsText.split(',').map(tag => tag.trim());
+                
+                displayTags(tags);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error generating tags');
+            } finally {
+                document.querySelector('.loading').style.display = 'none';
+            }
+        }
+
+        function displayTags(tags) {
+            const container = document.getElementById('tagsContainer');
+            container.innerHTML = tags.map(tag => `
+                <div class="tag">
+                    <span>${tag}</span>
+                    <div class="tag-actions">
+                        <button onclick="copyTag('${tag}')">📋</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function copyTag(tag) {
+            navigator.clipboard.writeText(tag);
+        }
+
+        function copyTags() {
+            const tags = Array.from(document.querySelectorAll('.tag span'))
+                            .map(span => span.textContent)
+                            .join(', ');
+            navigator.clipboard.writeText(tags);
+            alert('Tags copied to clipboard!');
+        }
+
+        function saveTags() {
+            const tags = Array.from(document.querySelectorAll('.tag span'))
+                            .map(span => span.textContent);
+            localStorage.setItem('savedTags', JSON.stringify(tags));
+            alert('Tags saved locally!');
+        }
+    </script>
+</body>
+</html>
